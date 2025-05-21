@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Online Quiz System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #8e9eab, #eef2f3);
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .hidden {
+      display: none;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+      transition: 0.3s;
+    }
+    input:focus {
+      border-color: #66afe9;
+      outline: none;
+      box-shadow: 0 0 8px #66afe9;
+    }
+    .quiz-section {
+      margin-top: 20px;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .question p {
+      font-weight: bold;
+    }
+    .question label {
+      font-weight: normal;
+      display: block;
+      margin-left: 20px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 12px 20px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      font-weight: bold;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e0ffe0;
+      border: 1px solid #a3d8a3;
+      border-radius: 5px;
+      text-align: center;
+    }
+    /* Toast Styling */
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 17px;
+    }
+
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    @keyframes fadein {
+      from { bottom: 0; opacity: 0; }
+      to { bottom: 30px; opacity: 1; }
+    }
+
+    @keyframes fadeout {
+      from { bottom: 30px; opacity: 1; }
+      to { bottom: 0; opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login Form -->
+    <div id="loginForm">
+      <h2>Login to Start Quiz</h2>
+      <label>Name:</label>
+      <input type="text" id="name" />
+
+      <label>Password:</label>
+      <input type="password" id="password" />
+
+      <label>Email (optional):</label>
+      <input type="email" id="email" />
+
+      <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Quiz Dashboard -->
+    <div id="quizDashboard" class="hidden">
+      <h2>Quiz Dashboard</h2>
+      <div class="quiz-section">
+        <div class="question">
+          <p>1. What is the capital of France?</p>
+          <label><input type="radio" name="q1" value="Paris" /> Paris</label>
+          <label><input type="radio" name="q1" value="London" /> London</label>
+          <label><input type="radio" name="q1" value="Berlin" /> Berlin</label>
+        </div>
+
+        <div class="question">
+          <p>2. Which language is used for web development?</p>
+          <label><input type="radio" name="q2" value="Python" /> Python</label>
+          <label><input type="radio" name="q2" value="HTML" /> HTML</label>
+          <label><input type="radio" name="q2" value="C" /> C</label>
+        </div>
+
+        <div class="question">
+          <p>3. What is 2 + 2?</p>
+          <label><input type="radio" name="q3" value="3" /> 3</label>
+          <label><input type="radio" name="q3" value="4" /> 4</label>
+          <label><input type="radio" name="q3" value="5" /> 5</label>
+        </div>
+
+        <div class="question">
+          <p>4. Who wrote 'Romeo and Juliet'?</p>
+          <label><input type="radio" name="q4" value="Shakespeare" /> Shakespeare</label>
+          <label><input type="radio" name="q4" value="Dickens" /> Dickens</label>
+          <label><input type="radio" name="q4" value="Tolkien" /> Tolkien</label>
+        </div>
+
+        <button onclick="submitQuiz()">Submit Quiz</button>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast"></div>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = "show";
+      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+
+    function login() {
+      const name = document.getElementById("name").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const email = document.getElementById("email").value.trim();
+
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+      if (name.length < 4) {
+        showToast("Name must be at least 4 characters.");
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast("Password must be at least 6 characters.");
+        return;
+      }
+
+      if (email && !emailRegex.test(email)) {
+        showToast("Email must be in the format xxxx@gmail.com");
+        return;
+      }
+
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("quizDashboard").classList.remove("hidden");
+    }
+
+    function submitQuiz() {
+      const answers = {
+        q1: "Paris",
+        q2: "HTML",
+        q3: "4",
+        q4: "Shakespeare"
+      };
+
+      let score = 0;
+      for (let key in answers) {
+        const selected = document.querySelector(`input[name="${key}"]:checked`);
+        if (selected && selected.value === answers[key]) {
+          score++;
+        }
+      }
+
+      document.getElementById("result").innerText = `You scored ${score}/4!`;
+      showToast("Your response has been submitted. You can view your results.");
+    }
+  </script>
+</body>
+</html>
